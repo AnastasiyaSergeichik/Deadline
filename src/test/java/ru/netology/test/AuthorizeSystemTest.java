@@ -3,38 +3,53 @@ package ru.netology.test;
 import lombok.val;
 import org.junit.jupiter.api.*;
 import ru.netology.data.DataHelper;
+import ru.netology.data.DataSql;
 import ru.netology.page.LoginPage;
 
+import java.sql.SQLException;
 
 import static com.codeborne.selenide.Selenide.open;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuthorizeSystemTest {
+    DataSql dataSql = new DataSql();
+
+    private LoginPage loginPage;
+
+    @BeforeEach
+    void setup() {
+        loginPage = open("http://localhost:9999", LoginPage.class);
+    }
+
     @AfterAll
-    static void cleanBase() {
-        DataHelper.clearTables();
+    static void clean() throws SQLException {
+        DataSql.cleanData();
     }
 
-
+      @Test
     @Order(1)
-    @Test
-    void shouldSignIn() {
-        val loginPage = open("http://localhost:9999", LoginPage.class);
-        val authInfo = DataHelper.getActiveAuthInfo();
-        loginPage.login(authInfo);
-        loginPage.returnVerificationPage().validVerify(DataHelper.getVerificationCodeFor(authInfo));
+    void shouldLoginUser()  throws SQLException {
+        val AuthInfo = DataHelper.getAuthInfo();
+        val verificationPage = loginPage.validLogin(AuthInfo);
+        val verificationCode = DataSql.getVerificationCode(AuthInfo.getLogin());
+        verificationPage.validVerify(verificationCode);
     }
 
-
-    @Order(2)
     @Test
-    void shouldBlockedWithErrorPass() {
-        val loginPage = open("http://localhost:9999", LoginPage.class);
-        val authInfo = DataHelper.getInActiveAuthInfo();
-        loginPage.login(authInfo);
-        loginPage.login(authInfo);
-        loginPage.login(authInfo);
-        loginPage.blocked();
+    @Order(2)
+    void shouldBlockedIfLoginWithWrongErrorThreeTime() throws SQLException {
+        val AuthInfo = DataHelper.getUserErrorPassword();
+        loginPage.login(AuthInfo);
+        loginPage.showErrorMessage();
+        loginPage.clearFields();
+        loginPage.login(AuthInfo);
+        loginPage.showErrorMessage();
+        loginPage.clearFields();
+        loginPage.login(AuthInfo);
+        loginPage.showErrorMessage();
+        val status = dataSql.getUserStatus(AuthInfo.getLogin());
+        assertEquals("blocked", status);
     }
 }
-

@@ -8,28 +8,31 @@ import ru.netology.data.DataHelper;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage {
-    private SelenideElement loginField = $("[data-test-id=login] input");
-    private SelenideElement passwordField = $("[data-test-id=password] input");
+    private SelenideElement loginInput = $("[data-test-id=login] input");
+    private SelenideElement passwordInput = $("[data-test-id=password] input");
     private SelenideElement loginButton = $("[data-test-id=action-login]");
-    private SelenideElement notification = $("[data-test-id=error-notification] .notification__content");
 
-
-    public void login(DataHelper.AuthInfo info) {
-        loginField.sendKeys(Keys.CONTROL + "a", Keys.BACK_SPACE);
-        loginField.setValue(info.getLogin());
-        passwordField.sendKeys(Keys.CONTROL + "a", Keys.BACK_SPACE);
-        passwordField.setValue(info.getPassword());
+    public void login(DataHelper.AuthInfo loginInfo) {
+        loginInput.setValue(loginInfo.getLogin());
+        passwordInput.setValue(loginInfo.getPassword());
         loginButton.click();
+
     }
 
-
-    public VerificationPage returnVerificationPage() {
+    public VerificationPage validLogin(DataHelper.AuthInfo info) {
+        login(info);
         return new VerificationPage();
     }
 
+    public void showErrorMessage() {
 
-    public void blocked() {
-        notification.shouldHave(Condition.text("заблокирован"));
+        $(".notification").shouldHave(Condition.text("Ошибка! Неверно указан логин или пароль"));
+
+    }
+
+    public void clearFields() {
+        loginInput.doubleClick().sendKeys(Keys.BACK_SPACE);
+        passwordInput.doubleClick().sendKeys(Keys.BACK_SPACE);
     }
 }
 

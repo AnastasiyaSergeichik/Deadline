@@ -16,7 +16,7 @@ public class DataSql {
         return connection;
     }
 
-    public static String getVerificationCode(String login) throws SQLException {
+    public static String getVerificationCode(String login) {
         String userId = null;
         val dataSQL = "SELECT id FROM users WHERE login = ?;";
         try (val conn = getConnection();
@@ -28,7 +28,10 @@ public class DataSql {
                     userId = rs.getString("id");
                 }
             }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
+
         String code = null;
         val authCode = "SELECT code FROM auth_codes WHERE user_id = ? order by created desc limit 1;";
         try (val conn = getConnection();
@@ -40,12 +43,14 @@ public class DataSql {
                     code = rs.getString("code");
                 }
             }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
         return code;
     }
 
-    public String getUserStatus(String login) throws SQLException {
-        String statusSQL = "SELECT status FROM users WHERE login = ?;";
+    public static String getUserStatus(String login) {
+        val statusSQL = "SELECT status FROM users WHERE login = ?;";
         String status = null;
         try (val conn = getConnection();
              val statusStmt = conn.prepareStatement(statusSQL);) {
@@ -55,11 +60,13 @@ public class DataSql {
                     status = rs.getString("status");
                 }
             }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
         return status;
     }
 
-    public static void cleanData() throws SQLException {
+    public static void cleanData() {
         String deleteCards = "DELETE FROM cards; ";
         String deleteAuthCodes = "DELETE FROM auth_codes; ";
         String deleteUsers = "DELETE FROM users; ";
@@ -71,6 +78,8 @@ public class DataSql {
             deleteCardsStmt.executeUpdate(deleteCards);
             deleteAuthCodesStmt.executeUpdate(deleteAuthCodes);
             deleteUsersStmt.executeUpdate(deleteUsers);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
     }
 }
